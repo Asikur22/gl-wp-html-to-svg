@@ -17,7 +17,6 @@ wp.media.view.MediaFrame.Post = frame.extend({
 			this
 		);
 	},
-
 	browseRouter: function (routerView) {
 		routerView.set({
 			upload: {
@@ -34,7 +33,6 @@ wp.media.view.MediaFrame.Post = frame.extend({
 			}
 		});
 	},
-
 	contentGlHtmlToSvg: function () {
 		let GlHtmlToSvgContent = wp.Backbone.View.extend({
 			tagName: 'div',

@@ -3,7 +3,7 @@
 * Plugin Name: GL HTML to SVG
 * Plugin URI: https://greenlifeit.com/
 * Description: A WordPress plugin to convert HTML to SVG and save to WordPress media library.
-* Version: 1.0.0
+* Version: 2.0.0
 * Author: Asiqur Rahman <asikur22@gmail.com>
 * Author URI: https://asique.net/
 * License: GPL v2 or later
@@ -79,12 +79,14 @@ class GL_HTML_to_SVG {
 		<?php
 	}
 	
-	function gl_sanitize_svg_html( $svg, $allow_style_script = true ) : string {
+	function gl_sanitize_svg_html( $svg_content, $allow_style_script = true ) : string {
 		$allowed_tags = array(
 			'svg'              => array(
 				'xmlns'              => true,
 				'xmlns:xlink'        => true,
 				'xml:space'          => true,
+				'xml:lang'           => true,
+				'xml:base'           => true,
 				'src'                => true,
 				'width'              => true,
 				'height'             => true,
@@ -110,6 +112,7 @@ class GL_HTML_to_SVG {
 				'fill-rule'          => true,
 				'clip-rule'          => true,
 				'transform'          => true,
+				'transform-origin'   => true,
 				'opacity'            => true,
 				'aria-hidden'        => true,
 				'aria-label'         => true,
@@ -130,62 +133,308 @@ class GL_HTML_to_SVG {
 				'enable-background'  => true,
 				'shape-rendering'    => true,
 				'pointer-events'     => true,
+				'vector-effect'      => true,
+				'dominant-baseline'  => true,
+				'alignment-baseline' => true,
+				'baseline-shift'     => true,
+				'text-anchor'        => true,
+				'writing-mode'       => true,
+				'font-family'        => true,
+				'font-size'          => true,
+				'font-style'         => true,
+				'font-weight'        => true,
+				'text-decoration'    => true,
+				'letter-spacing'     => true,
+				'word-spacing'       => true,
+				'direction'          => true,
+				'unicode-bidi'       => true,
+				'paint-order'        => true,
+				'marker-start'       => true,
+				'marker-mid'         => true,
+				'marker-end'         => true,
 			),
 			// Structure
 			'defs'             => array(),
-			'g'                => array( 'fill' => true, 'stroke' => true, 'class' => true, 'id' => true ),
-			'symbol'           => array( 'id' => true, 'viewBox' => true ),
-			'use'              => array( 'href' => true, 'x' => true, 'y' => true, 'width' => true, 'height' => true ),
+			'g'                => array(
+				'fill'               => true,
+				'stroke'             => true,
+				'class'              => true,
+				'id'                 => true,
+				'transform'          => true,
+				'style'              => true,
+				'clip-path'          => true,
+				'mask'               => true,
+				'filter'             => true,
+				'opacity'            => true,
+			),
+			'symbol'           => array(
+				'id'                 => true,
+				'viewBox'            => true,
+				'preserveAspectRatio'=> true,
+				'overflow'           => true,
+			),
+			'use'              => array(
+				'href'               => true,
+				'xlink:href'         => true,
+				'x'                  => true,
+				'y'                  => true,
+				'width'              => true,
+				'height'             => true,
+				'transform'          => true,
+			),
+			'foreignObject',
+			'tspan'            => array(
+				'x'                  => true,
+				'y'                  => true,
+				'dx'                 => true,
+				'dy'                 => true,
+				'rotate'             => true,
+				'lengthAdjust'       => true,
+				'textLength'         => true,
+				'fill'               => true,
+				'stroke'             => true,
+				'class'              => true,
+				'style'              => true,
+				'id'                 => true,
+			),
+			'textPath'         => array(
+				'href'               => true,
+				'xlink:href'         => true,
+				'startOffset'        => true,
+				'method'             => true,
+				'spacing'            => true,
+				'class'              => true,
+				'style'              => true,
+				'id'                 => true,
+			),
 			
-			// Shapes
-			'circle'           => array( 'cx' => true, 'cy' => true, 'r' => true, 'fill' => true, 'stroke' => true, 'style' => true ),
-			'ellipse'          => array( 'cx' => true, 'cy' => true, 'rx' => true, 'ry' => true, 'fill' => true, 'stroke' => true ),
-			'line'             => array( 'x1' => true, 'x2' => true, 'y1' => true, 'y2' => true, 'stroke' => true ),
-			'polygon'          => array( 'points' => true, 'fill' => true, 'stroke' => true ),
-			'polyline'         => array( 'points' => true, 'fill' => true, 'stroke' => true ),
-			'rect'             => array( 'x' => true, 'y' => true, 'width' => true, 'height' => true, 'fill' => true, 'stroke' => true, 'rx' => true, 'ry' => true ),
-			'path'             => array( 'd' => true, 'fill' => true, 'stroke' => true ),
-			
-			// Text
-			'text'             => array( 'x' => true, 'y' => true, 'fill' => true, 'stroke' => true, 'class' => true ),
-			'tspan'            => array( 'x' => true, 'y' => true, 'class' => true ),
-			'textPath'         => array( 'href' => true ),
-			
-			// Gradients & Patterns
-			'linearGradient'   => array( 'id' => true, 'x1' => true, 'x2' => true, 'y1' => true, 'y2' => true, 'gradientUnits' => true ),
-			'radialGradient'   => array( 'id' => true, 'cx' => true, 'cy' => true, 'r' => true ),
-			'stop'             => array( 'offset' => true, 'stop-color' => true, 'stop-opacity' => true ),
-			'pattern'          => array( 'id' => true, 'patternUnits' => true, 'width' => true, 'height' => true ),
-			
-			// Clipping & Masking
-			'clipPath'         => array( 'id' => true ),
-			'mask'             => array( 'id' => true ),
-			
-			// Animation
-			'animate'          => array( 'attributeName' => true, 'from' => true, 'to' => true, 'dur' => true, 'repeatCount' => true ),
-			'animateTransform' => array( 'attributeName' => true, 'type' => true, 'from' => true, 'to' => true, 'dur' => true, 'repeatCount' => true ),
+			// Gradients and Patterns
+			'linearGradient'   => array(
+				'id'                 => true,
+				'x1'                 => true,
+				'x2'                 => true,
+				'y1'                 => true,
+				'y2'                 => true,
+				'gradientUnits'      => true,
+				'gradientTransform'  => true,
+				'spreadMethod'       => true,
+				'href'               => true,
+				'xlink:href'         => true,
+			),
+			'radialGradient'   => array(
+				'id'                 => true,
+				'cx'                 => true,
+				'cy'                 => true,
+				'r'                  => true,
+				'fx'                 => true,
+				'fy'                 => true,
+				'fr'                 => true,
+				'gradientUnits'      => true,
+				'gradientTransform'  => true,
+				'spreadMethod'       => true,
+				'href'               => true,
+				'xlink:href'         => true,
+			),
+			'stop'             => array(
+				'offset'             => true,
+				'stop-color'         => true,
+				'stop-opacity'       => true,
+				'style'              => true,
+			),
+			'pattern'          => array(
+				'id'                 => true,
+				'x'                  => true,
+				'y'                  => true,
+				'width'              => true,
+				'height'             => true,
+				'patternUnits'       => true,
+				'patternContentUnits'=> true,
+				'patternTransform'   => true,
+				'href'               => true,
+				'xlink:href'         => true,
+			),
 			
 			// Filters
-			'filter'           => array( 'id' => true, 'filterUnits' => true ),
-			'feGaussianBlur'   => array( 'stdDeviation' => true ),
-			'feOffset'         => array( 'dx' => true, 'dy' => true ),
-			'feMerge'          => array(),
-			'feMergeNode'      => array(),
+			'filter'           => array(
+				'id'                 => true,
+				'x'                  => true,
+				'y'                  => true,
+				'width'              => true,
+				'height'             => true,
+				'filterUnits'        => true,
+				'primitiveUnits'     => true,
+				'href'               => true,
+				'xlink:href'         => true,
+			),
+			'feBlend'          => array(
+				'mode'               => true,
+				'in'                 => true,
+				'in2'                => true,
+				'result'             => true,
+			),
+			'feColorMatrix'    => array(
+				'type'               => true,
+				'values'             => true,
+				'in'                 => true,
+				'result'             => true,
+			),
+			'feComponentTransfer' => array(
+				'in'                 => true,
+				'result'             => true,
+			),
+			'feComposite'      => array(
+				'operator'           => true,
+				'in'                 => true,
+				'in2'                => true,
+				'k1'                 => true,
+				'k2'                 => true,
+				'k3'                 => true,
+				'k4'                 => true,
+				'result'             => true,
+			),
+			'feConvolveMatrix' => array(
+				'order'              => true,
+				'kernelMatrix'       => true,
+				'divisor'            => true,
+				'bias'               => true,
+				'targetX'            => true,
+				'targetY'            => true,
+				'edgeMode'           => true,
+				'in'                 => true,
+				'result'             => true,
+			),
+			'feDiffuseLighting'=> array(
+				'surfaceScale'       => true,
+				'diffuseConstant'    => true,
+				'in'                 => true,
+				'result'             => true,
+			),
+			'feDisplacementMap'=> array(
+				'scale'              => true,
+				'xChannelSelector'   => true,
+				'yChannelSelector'   => true,
+				'in'                 => true,
+				'in2'                => true,
+				'result'             => true,
+			),
+			'feFlood'          => array(
+				'flood-color'        => true,
+				'flood-opacity'      => true,
+				'result'             => true,
+			),
+			'feFuncR'          => array(
+				'type'               => true,
+				'tableValues'        => true,
+				'slope'              => true,
+				'intercept'          => true,
+				'amplitude'          => true,
+				'exponent'           => true,
+				'offset'             => true,
+			),
+			'feFuncG'          => array(
+				'type'               => true,
+				'tableValues'        => true,
+				'slope'              => true,
+				'intercept'          => true,
+				'amplitude'          => true,
+				'exponent'           => true,
+				'offset'             => true,
+			),
+			'feFuncB'          => array(
+				'type'               => true,
+				'tableValues'        => true,
+				'slope'              => true,
+				'intercept'          => true,
+				'amplitude'          => true,
+				'exponent'           => true,
+				'offset'             => true,
+			),
+			'feFuncA'          => array(
+				'type'               => true,
+				'tableValues'        => true,
+				'slope'              => true,
+				'intercept'          => true,
+				'amplitude'          => true,
+				'exponent'           => true,
+				'offset'             => true,
+			),
+			'feGaussianBlur'   => array(
+				'stdDeviation'       => true,
+				'in'                 => true,
+				'result'             => true,
+			),
+			'feImage'          => array(
+				'href'               => true,
+				'xlink:href'         => true,
+				'result'             => true,
+			),
+			'feMerge'          => array(
+				'result'             => true,
+			),
+			'feMergeNode'      => array(
+				'in'                 => true,
+			),
+			'feMorphology'     => array(
+				'operator'           => true,
+				'radius'             => true,
+				'in'                 => true,
+				'result'             => true,
+			),
+			'feOffset'         => array(
+				'dx'                 => true,
+				'dy'                 => true,
+				'in'                 => true,
+				'result'             => true,
+			),
+			'feSpecularLighting'=> array(
+				'surfaceScale'       => true,
+				'specularConstant'   => true,
+				'specularExponent'   => true,
+				'in'                 => true,
+				'result'             => true,
+			),
+			'feTile'           => array(
+				'in'                 => true,
+				'result'             => true,
+			),
+			'feTurbulence'     => array(
+				'baseFrequency'      => true,
+				'numOctaves'         => true,
+				'seed'               => true,
+				'stitchTiles'        => true,
+				'type'               => true,
+				'result'             => true,
+			),
 			
-			// Metadata
-			'title'            => array(),
-			'desc'             => array(),
-			'metadata'         => array(),
+			// Lighting
+			'feDistantLight'   => array(
+				'azimuth'            => true,
+				'elevation'          => true,
+			),
+			'fePointLight'     => array(
+				'x'                  => true,
+				'y'                  => true,
+				'z'                  => true,
+			),
+			'feSpotLight'      => array(
+				'x'                  => true,
+				'y'                  => true,
+				'z'                  => true,
+				'pointsAtX'          => true,
+				'pointsAtY'          => true,
+				'pointsAtZ'          => true,
+				'specularExponent'   => true,
+				'limitingConeAngle'  => true,
+			)
 		);
 
-		// Add style and script tags if allowed
-		if ($allow_style_script) {
-			$allowed_tags['style'] = [];
-			$allowed_tags['script'] = [];
+		if ( $allow_style_script ) {
+			$allowed_tags['style'] = array();
+			$allowed_tags['script'] = array();
 		}
-		
-		return wp_kses( $svg, $allowed_tags );
-	}
+
+		return wp_kses( $svg_content, $allowed_tags );
+	}	
 	
 	public function convert_html_to_svg() : void {
 		check_ajax_referer( 'html-to-svg-nonce', 'nonce' );
@@ -196,6 +445,7 @@ class GL_HTML_to_SVG {
 		
 		$allow_style_script = isset($_POST['allow_style_script']) ? filter_var($_POST['allow_style_script'], FILTER_VALIDATE_BOOLEAN) : false;
 		$html = isset( $_POST['html'] ) ? $this->gl_sanitize_svg_html( $_POST['html'], $allow_style_script ) : '';
+		write_log( $html );
 		if ( empty( $html ) ) {
 			wp_send_json_error( 'SVG content is required' );
 		}
@@ -215,8 +465,6 @@ class GL_HTML_to_SVG {
 		$file_path   = $upload_dir['path'] . '/' . $filename;
 		
 		try {
-			write_log( $html );
-			// write_log( $filename );
 			file_put_contents( $file_path, $html );
 			
 			$attachment = array(
